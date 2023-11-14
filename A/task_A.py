@@ -1,40 +1,30 @@
 import numpy as np
-import pandas as pd
 from sklearn import svm
 from sklearn import metrics
 
-class PNEUMONIA:
-    def __init__(self, data):
-        self.train_images = data['train_images']
-        self.test_images = data['train_images']
-        self.val_images = data['val_images']
 
-        self.train_labels = data['train_labels']
-        self.test_labels = data['train_labels']
-        self.val_labels = data['val_labels']
+def main():
+    data = np.load('./Datasets/pneumoniamnist.npz')
 
+    train_images = data['train_images']
+    test_images = data['test_images']
+    val_images = data['val_images']
 
-    def model_accuracy(self):
-        return metrics.accuracy_score(self.test_labels, self.pred_labels)
+    train_labels = data['train_labels'].ravel()
+    test_labels = data['test_labels'].ravel()
+    val_labels = data['val_labels'].ravel()
     
-    def __image_flattening(self):
-        self.train_images_flattened = self.train_images.flatten()
-        self.test_images_flattened = self.test_images.flatten()
-        self.val_images_flattened = self.val_images.flatten()
-        self.train_labels_flattened = self.train_labels.flatten()
-        self.test_labels_flattened = self.train_labels.flatten()
-        self.val_labels_flattened = self.val_labels.flatten()
-
-    def support_vector_machines(self):
-        self.__image_flattening()
-        clf = svm.SVC(kernel = 'linear')
-        clf.fit(self.train_images, self.test_labels)
-        self.pred_labels = clf.predict(self.test_images)
+    train_images = train_images.reshape((train_images.shape[0], train_images[0].size))
+    test_images = test_images.reshape((test_images.shape[0], test_images[0].size))
+    val_images = val_images.reshape((val_images.shape[0], val_images[0].size))
     
-    def print_images(self):
-        print(self.train_images[0])
+    clf = svm.SVC(kernel = 'rbf')
+    clf.fit(train_images, train_labels)
+    pred_labels = clf.predict(test_images)
 
-data = np.load('AMLS_assignment23_24/Datasets/pneumoniamnist.npz')
-pneumonia = PNEUMONIA(data)
-pneumonia.support_vector_machines()
-print("Accuracy:", pneumonia.model_accuracy())
+    print(metrics.accuracy_score(test_labels, pred_labels))
+    
+
+main()
+    
+
