@@ -85,16 +85,6 @@ def main():
     print('RBF kernel; Prediction accuracy score: ', pred_score)
     
 
-'''    best_parameter, best_score = hyper_parameters(val_images, val_labels, 'linear')
-    print('Linear kernel; Best hyperparameter and its accuracy score: ', best_parameter, best_score)
-
-    cv_score = cross_validation(train_images, train_labels, 'linear', best_parameter)
-    print('Linear kernel; Cross validation accuracy score: ', cv_score)
-
-    pred_labels = support_vector_machine(train_images, train_labels, test_images, 'linear', best_parameter)
-    pred_score = performance_evaluation(test_labels, pred_labels)
-    print('Linear kernel; Prediction accuracy score: ', pred_score)'''
-
 
 if __name__ == "__main__":
     main()
