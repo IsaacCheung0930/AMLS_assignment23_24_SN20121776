@@ -1,8 +1,8 @@
 import numpy as np
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 import torch.optim as optim
+import torch.optim.lr_scheduler as lr_scheduler
 from torch.utils.data import Dataset, DataLoader
 
 class CustomImageDataset(Dataset):
@@ -49,52 +49,86 @@ class CNN(nn.Module):
         x = self.fc2(x)
         return x
 
-train_images = CustomImageDataset('./Datasets/pathmnist.npz', 'train')
-test_images = CustomImageDataset('./Datasets/pathmnist.npz', 'test')
-val_images = CustomImageDataset('./Datasets/pathmnist.npz', 'val')
+def train(dataloader, model, criterion, optimizer, device):
+    model.train()
+    size = len(dataloader.dataset)
 
-dataloader = DataLoader(train_images, batch_size = 32, shuffle = True)
-
-model = CNN()
-
-criterion = nn.CrossEntropyLoss()
-optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
-
-for epoch in range(2):  # loop over the dataset multiple times
-
-    running_loss = 0.0
     for i, data in enumerate(dataloader, 0):
-        # get the inputs; data is a list of [inputs, labels]
-        inputs, labels = data
+        images, labels = data
+        images, labels = images.to(device), labels.to(device)
+        pred = model(images)
+        loss = criterion(pred, labels)
 
-        # zero the parameter gradients
-        optimizer.zero_grad()
-
-        # forward + backward + optimize
-        outputs = model(inputs)
-        loss = criterion(outputs, labels)
         loss.backward()
         optimizer.step()
+        optimizer.zero_grad()
 
-        # print statistics
-        running_loss += loss.item()
-        if i % 2000 == 1999:    # print every 2000 mini-batches
-            print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss / 2000:.3f}')
-            running_loss = 0.0
+        if i % 1000 == 0:   
+            loss, current = loss.item(), (i + 1) * len(images)
+            print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
 
-print('Finished Training')
+def validation(dataloader, model, criterion, device):
+    model.eval()
+    batch = len(dataloader)
+    size = len(dataloader.dataset)
+    test_loss = 0
+    correct = 0
 
-correct = 0
-total = 0
-# since we're not training, we don't need to calculate the gradients for our outputs
-with torch.no_grad():
-    for data in test_images:
-        images, labels = data
-        # calculate outputs by running images through the network
-        outputs = model(images)
-        # the class with the highest energy is what we choose as prediction
-        _, predicted = torch.max(outputs.data, 1)
-        total += labels.size(0)
-        correct += (predicted == labels).sum().item()
+    with torch.no_grad():
+        for images, labels in dataloader:
+            images, labels = images.to(device), labels.to(device)
+            pred = model(images)
+            loss = criterion(pred, labels)
+            test_loss += loss.item()
+            correct += (pred.argmax(1) == labels).type(torch.float).sum().item()
 
-print(f'Accuracy of the network on the 10000 test images: {100 * correct // total} %')
+    test_loss /= batch
+    correct /= size
+    print(f"Test Error: \n Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f} \n")
+
+def main():
+    if(torch.cuda.is_available()):
+        device = torch.device("cuda")
+    else:
+        device = torch.device("cpu")
+    print(f"Using {device} device")
+
+    train_images = CustomImageDataset('./Datasets/pathmnist.npz', 'train')
+    test_images = CustomImageDataset('./Datasets/pathmnist.npz', 'test')
+    val_images = CustomImageDataset('./Datasets/pathmnist.npz', 'val')
+
+    train_dataloader = DataLoader(train_images, batch_size = 32, shuffle = True)
+    val_dataloader = DataLoader(val_images, batch_size = 32, shuffle = True)
+    
+    model = CNN().to(device)
+
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
+    scheduler = lr_scheduler.ExponentialLR(optimizer = optimizer, gamma = 0.9)
+
+    for i in range(10):
+        print(f"Epoch {i+1}\n-------------------------------")
+        train(train_dataloader, model, criterion, optimizer, device)
+        validation(val_dataloader, model, criterion, device)
+        scheduler.step()
+    print('Finished Training')
+
+    correct = 0
+    total = 0
+    # since we're not training, we don't need to calculate the gradients for our outputs
+    with torch.no_grad():
+        for data in test_images:
+            images, labels = data
+            images, labels = images.to(device), labels.to(device)
+            # calculate outputs by running images through the network
+            outputs = model(images)
+            # the class with the highest energy is what we choose as prediction
+            _, predicted = torch.max(outputs.data, 1)
+            total += labels.size(0)
+            correct += (predicted == labels).sum().item()
+
+    print(f'Accuracy of the network on the 10000 test images: {100 * correct // total} %')
+
+if __name__ == "__main__":
+    main()
+    
