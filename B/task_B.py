@@ -4,6 +4,8 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.optim.lr_scheduler as lr_scheduler
 from torch.utils.data import Dataset, DataLoader
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay, precision_score, recall_score, precision_recall_fscore_support
+import matplotlib.pyplot as plt
 
 class CustomImageDataset(Dataset):
     def __init__(self, path, subset = 'train'):
@@ -44,14 +46,16 @@ class CNN(nn.Module):
         x = self.pool(self.relu(self.conv2(x)))
         x = self.pool(self.relu(self.conv3(x)))
 
-        x = x.view(-1, 64 * 3 * 3)  # Adjusted for 28x28 input size
+        x = x.view(-1, 64 * 3 * 3)   # Adjusted for 28x28 input size
         x = self.relu(self.fc1(x))
         x = self.fc2(x)
         return x
 
 def train(dataloader, model, criterion, optimizer, device):
     model.train()
+    batch = len(dataloader)
     size = len(dataloader.dataset)
+    total_loss = 0
 
     for i, data in enumerate(dataloader, 0):
         images, labels = data
@@ -63,14 +67,21 @@ def train(dataloader, model, criterion, optimizer, device):
         optimizer.step()
         optimizer.zero_grad()
 
+        total_loss += loss.item()
+
         if i % 1000 == 0:   
-            loss, current = loss.item(), (i + 1) * len(images)
-            print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
+            current = (i + 1) * len(images)
+            print(f"loss: {loss.item():>7f}  [{current:>5d}/{size:>5d}]")
+        
+    avg_loss = total_loss/ batch
+    
+    return avg_loss
 
 def validation(dataloader, model, criterion, device):
     model.eval()
     batch = len(dataloader)
     size = len(dataloader.dataset)
+
     test_loss = 0
     correct = 0
 
@@ -82,9 +93,55 @@ def validation(dataloader, model, criterion, device):
             test_loss += loss.item()
             correct += (pred.argmax(1) == labels).type(torch.float).sum().item()
 
-    test_loss /= batch
-    correct /= size
-    print(f"Test Error: \n Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f} \n")
+    avg_loss = test_loss/ batch
+    avg_correct = correct/ size
+    print(f"Test Error: \n Accuracy: {(100*avg_correct):>0.1f}%, Avg loss: {avg_loss:>8f} \n")
+
+    return avg_loss, avg_correct
+
+def prediction(model, test_images, device):
+    correct = 0
+    total = 0
+    pred_values = []
+    true_values = []
+
+    # since we're not training, we don't need to calculate the gradients for our outputs
+    with torch.no_grad():
+        for data in test_images:
+            images, labels = data
+            images, labels = images.to(device), labels.to(device)
+            # calculate outputs by running images through the network
+            outputs = model(images)
+            # the class with the highest energy is what we choose as prediction
+            _, predicted = torch.max(outputs.data, 1)
+            total += labels.size(0)
+            correct += (predicted == labels).sum().item()
+
+            pred_values.append(predicted.item())
+            true_values.append(labels.item())
+
+    pred_accuracy = 100* correct // total
+    print(f'Accuracy of the network on the 10000 test images: {pred_accuracy} %')
+    
+    return pred_values, true_values
+
+def training_validation_plots(epoch, train_loss, val_loss, val_correct):
+    plt.figure(1)
+    plt.plot(epoch, train_loss, label = "Training Loss")
+    plt.plot(epoch, val_loss, label = "Validation Loss")
+    plt.title("Training and Validation Loss Against Epoch")
+    plt.xlabel("Epoch")
+    plt.ylabel("Loss")
+    plt.legend()
+    plt.savefig("./B/Training and Validation Loss Against Epoch.PNG")
+
+    plt.figure(2)
+    plt.plot(epoch, val_correct, label = "Validation Accuracy")
+    plt.title("Validation Accuracy Against Epoch")
+    plt.xlabel("Epoch")
+    plt.ylabel("Accuracy")
+    plt.legend()
+    plt.savefig("./B/Validation Accuracy Against Epoch.PNG")
 
 def main():
     if(torch.cuda.is_available()):
@@ -92,6 +149,9 @@ def main():
     else:
         device = torch.device("cpu")
     print(f"Using {device} device")
+
+    torch.manual_seed(42)
+    np.random.seed(42)
 
     train_images = CustomImageDataset('./Datasets/pathmnist.npz', 'train')
     test_images = CustomImageDataset('./Datasets/pathmnist.npz', 'test')
@@ -105,29 +165,31 @@ def main():
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
     scheduler = lr_scheduler.ExponentialLR(optimizer = optimizer, gamma = 0.9)
+    
+    epoch = range(1, 11)
+    train_loss, val_loss, val_correct = [], [], []
 
-    for i in range(10):
-        print(f"Epoch {i+1}\n-------------------------------")
-        train(train_dataloader, model, criterion, optimizer, device)
-        validation(val_dataloader, model, criterion, device)
+    for i in epoch:
+        print(f"Epoch {i}\n-------------------------------")
+        avg_train_loss = train(train_dataloader, model, criterion, optimizer, device)
+        avg_val_loss, avg_val_correct = validation(val_dataloader, model, criterion, device)
         scheduler.step()
+
+        train_loss.append(avg_train_loss)
+        val_loss.append(avg_val_loss)
+        val_correct.append(avg_val_correct)
+
     print('Finished Training')
 
-    correct = 0
-    total = 0
-    # since we're not training, we don't need to calculate the gradients for our outputs
-    with torch.no_grad():
-        for data in test_images:
-            images, labels = data
-            images, labels = images.to(device), labels.to(device)
-            # calculate outputs by running images through the network
-            outputs = model(images)
-            # the class with the highest energy is what we choose as prediction
-            _, predicted = torch.max(outputs.data, 1)
-            total += labels.size(0)
-            correct += (predicted == labels).sum().item()
+    pred_values, true_values = prediction(model, test_images, device)
 
-    print(f'Accuracy of the network on the 10000 test images: {100 * correct // total} %')
+    training_validation_plots(epoch, train_loss, val_loss, val_correct)
+    conf_matrix = ConfusionMatrixDisplay(confusion_matrix(true_values, pred_values))
+    conf_matrix.plot(cmap= "plasma")
+    conf_matrix.figure_.savefig("./B/Confusion Matrix.PNG")
+    precision, recall, f1score, support = precision_recall_fscore_support(true_values, pred_values, average=None)
+    
+    print(precision, recall)
 
 if __name__ == "__main__":
     main()
