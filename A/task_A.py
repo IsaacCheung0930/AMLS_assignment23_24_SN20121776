@@ -92,12 +92,12 @@ class TaskA:
         plt.xscale('log')
         plt.yscale('log')
         plt.title("Mean Test Score for different combinations of hyperparameters")
-        plt.savefig("./A/RBF Kernel Mean Test Scores.PNG")
+        plt.savefig("./A/Plots/RBF Kernel Mean Test Scores.PNG")
 
     def _confusion_matrix_plot(self, true_values, pred_values):
         conf_matrix = ConfusionMatrixDisplay(confusion_matrix(true_values, pred_values))
         conf_matrix.plot(cmap= "plasma")
-        conf_matrix.figure_.savefig("./A/Confusion Matrix.PNG")
+        conf_matrix.figure_.savefig("./A/Plots/Confusion Matrix.PNG")
 
 def main():
     svm = TaskA('rbf','./Datasets/pneumoniamnist.npz')

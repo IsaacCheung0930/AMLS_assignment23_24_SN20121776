@@ -65,29 +65,47 @@ class TaskB:
         self._test_images = CustomImageDataset(dir, 'test')
         self._val_images = CustomImageDataset(dir, 'val')
 
-    def execution(self):
-        train_dataloader = DataLoader(self._train_images, batch_size = 32, shuffle = True)
-        val_dataloader = DataLoader(self._val_images, batch_size = 32, shuffle = True)
-
+    def execution(self, load=True, overwrite=False):
         model = CNN().to(self._device)
-        criterion = nn.CrossEntropyLoss()
-        optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
-        scheduler = lr_scheduler.ExponentialLR(optimizer = optimizer, gamma = 0.9)
 
-        self.epoch = range(1, 11)
-        self.train_loss, self.val_loss, self.val_correct = [], [], []
+        if load == True:
+            model.load_state_dict(torch.load("./B/CNN_model.pth"))
 
-        for i in self.epoch:
-            print(f"Epoch {i}\n-------------------------------")
-            avg_train_loss = self._train(train_dataloader, model, criterion, optimizer)
-            avg_val_loss, avg_val_correct = self._validation(val_dataloader, model, criterion)
-            scheduler.step()
+        else:
+            train_dataloader = DataLoader(self._train_images, batch_size = 32, shuffle = True)
+            val_dataloader = DataLoader(self._val_images, batch_size = 32, shuffle = True)
 
-            self.train_loss.append(avg_train_loss)
-            self.val_loss.append(avg_val_loss)
-            self.val_correct.append(avg_val_correct)
+            criterion = nn.CrossEntropyLoss()
+            optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
+            scheduler = lr_scheduler.ExponentialLR(optimizer = optimizer, gamma = 0.9)
 
-        print('Finished Training')
+            self.epoch = range(1, 21)
+            self.train_loss, self.val_loss, self.val_correct = [], [], []
+            best_state, best_epoch, best_loss, best_accuracy = {}, 1, float('inf'), 0
+
+            for i in self.epoch:
+                print(f"Epoch {i}\n-------------------------------")
+                avg_train_loss = self._train(train_dataloader, model, criterion, optimizer)
+                avg_val_loss, avg_val_correct = self._validation(val_dataloader, model, criterion)
+                scheduler.step()
+
+                self.train_loss.append(avg_train_loss)
+                self.val_loss.append(avg_val_loss)
+                self.val_correct.append(avg_val_correct)
+
+                if (avg_val_loss < best_loss) & (avg_val_correct > best_accuracy):
+                    best_loss = avg_val_loss
+                    best_accuracy = avg_val_correct
+                    best_state = model.state_dict()
+                    best_epoch = i
+
+            model.load_state_dict(best_state)
+            print(f'Finished Training, best epoch: {best_epoch}')
+
+            if overwrite == True:
+                torch.save(model.state_dict(), "./B/CNN_model.pth")
+                print("Model saved")
+
         self._pred_values, self._true_values = self._prediction(model, self._test_images)
 
     def evaluation(self):
@@ -140,7 +158,7 @@ class TaskB:
 
         avg_loss = test_loss/ batch
         avg_correct = correct/ size
-        print(f"Test Error: \nAccuracy: {(100*avg_correct):>0.1f}%, Avg loss: {avg_loss:>8f} \n")
+        print(f"Validation Error: \nAccuracy: {(100*avg_correct):>0.1f}%, Avg loss: {avg_loss:>8f} \n")
 
         return avg_loss, avg_correct
 
@@ -172,26 +190,28 @@ class TaskB:
 
     def _loss_accuracy_plots(self, epoch, train_loss, val_loss, val_correct):
         plt.figure()
-        plt.plot(epoch, train_loss, label = "Training Loss")
-        plt.plot(epoch, val_loss, label = "Validation Loss")
+        plt.plot(epoch, train_loss, label = "Training Loss", marker="*")
+        plt.plot(epoch, val_loss, label = "Validation Loss", marker="*")
         plt.title("Training and Validation Loss Against Epoch")
         plt.xlabel("Epoch")
         plt.ylabel("Loss")
+        plt.grid()
         plt.legend()
-        plt.savefig("./B/Training and Validation Loss Against Epoch.PNG")
+        plt.savefig("./B/Plots/Training and Validation Loss Against Epoch.PNG")
 
         plt.figure()
-        plt.plot(epoch, val_correct, label = "Validation Accuracy")
+        plt.plot(epoch, val_correct, label = "Validation Accuracy", marker="*")
         plt.title("Validation Accuracy Against Epoch")
         plt.xlabel("Epoch")
         plt.ylabel("Accuracy")
+        plt.grid()
         plt.legend()
-        plt.savefig("./B/Validation Accuracy Against Epoch.PNG")
+        plt.savefig("./B/Plots/Validation Accuracy Against Epoch.PNG")
 
     def _confusion_matrix_plot(self, true_values, pred_values):
         conf_matrix = ConfusionMatrixDisplay(confusion_matrix(true_values, pred_values))
         conf_matrix.plot(cmap= "plasma")
-        conf_matrix.figure_.savefig("./B/Confusion Matrix.PNG")
+        conf_matrix.figure_.savefig("./B/Plots/Confusion Matrix.PNG")
 
     def _metrics_plots(self, true_values, pred_values):
         micro_precision, micro_recall, micro_f1score, _ = precision_recall_fscore_support(true_values, pred_values, average='micro')
@@ -210,15 +230,21 @@ class TaskB:
         plt.bar(ticks + 0.4, f1score, 0.2, label = "F1")
         plt.xlabel("Classes")
         plt.ylabel("Score")
+        plt.grid()
         plt.title("Performace Metrics for 9 Classes")
         plt.xticks(ticks + 0.2, classes)
         plt.legend()
-        plt.savefig("./B/Performance Metrics.PNG")
+        plt.savefig("./B/Plots/Performance Metrics.PNG")
 
 def main():
     CNN_model = TaskB("./Datasets/pathmnist.npz")
-    CNN_model.execution()
+    CNN_model.execution(load=False, overwrite=True)
     CNN_model.evaluation()
+    #print(f"Total number of epoch: \n{CNN_model.epoch}")
+    #print(f"Training loss and validation loss: \n{CNN_model.train_loss}, {CNN_model.val_loss}")
+    #print(f"Validation accuracy: \n{CNN_model.val_correct}")
+    #print(f"Prediction accuracy: \n{CNN_model.pred_accuracy}")
+    
     #epoch, train_loss, val_loss, val_correct, pred_accuracy
 
 if __name__ == "__main__":
