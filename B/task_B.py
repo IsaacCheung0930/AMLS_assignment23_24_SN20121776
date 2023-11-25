@@ -91,6 +91,7 @@ class TaskB:
         self._pred_values, self._true_values = self._prediction(model, self._test_images)
 
     def evaluation(self):
+        # epoch, train_loss, val_loss, val_correct, pred_accuracy, loss-accuracy plot, confusion matrix, precision, recall, f1score
         self._loss_accuracy_plots(self.epoch, self.train_loss, self.val_loss, self.val_correct)
         self._confusion_matrix_plot(self._true_values, self._pred_values)
         self._metrics_plots(self._true_values, self._pred_values)
