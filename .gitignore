@@ -2,3 +2,4 @@ pathmnist.npz
 pneumoniamnist.npz
 Z_Archive
 Plots
+__pycache__
