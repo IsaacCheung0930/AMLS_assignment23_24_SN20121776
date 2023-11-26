@@ -27,14 +27,9 @@ AMLS_23-24_SN20121776
 This project (both tasks) can be run using the main.py, or individually using the respective .py files. 
 
 ## Required Packages
-numpy           1.26.2
-\
-pandas          2.0.3
-\
-matplotlib      3.7.2
-\
-scikit-learn    1.1.3
-\
-torch           2.1.0
-\
+- numpy           1.26.2
+- pandas          2.0.3
+- matplotlib      3.7.2
+- scikit-learn    1.1.3
+- torch           2.1.0
 More detailed package list can be found in requirement.txt.
