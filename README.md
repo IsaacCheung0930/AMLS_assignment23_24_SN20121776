@@ -16,17 +16,12 @@ AMLS_23-24_SN20121776
 - README.md
 - requirement.txt
 
-Task_A.py consists of a SVM model and Task_B.py consists of a CNN model.
-\
-Figures generated within the code are saved in the plots folder for each task.
-\
-The dataset folder holds the pneumoniamnist.npz and pathmnist.npz for task A and B respectively.
-\ 
-The .gitignore file prevents unnecessary files from being uploaded.
-\
-Both task A and B can be run at once using main.py.
-\
-All packages installed in the virtual environement is listed in requirement.txt.
+1. Task_A.py consists of a SVM model and Task_B.py consists of a CNN model.
+2. Figures generated within the code are saved in the plots folder for each task.
+3. The dataset folder holds the pneumoniamnist.npz and pathmnist.npz for task A and B respectively.
+4. The .gitignore file prevents unnecessary files from being uploaded.
+5. Both task A and B can be run at once using main.py.
+6. All packages installed in the virtual environement is listed in requirement.txt.
 
 ## Running the Project
 This project (both tasks) can be run using the main.py, or individually using the respective .py files. 
@@ -39,7 +34,7 @@ pandas          2.0.3
 matplotlib      3.7.2
 \
 scikit-learn    1.1.3
-\  
+\
 torch           2.1.0
 \
 More detailed package list can be found in requirement.txt.
