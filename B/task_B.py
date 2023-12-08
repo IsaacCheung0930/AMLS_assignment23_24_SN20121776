@@ -155,7 +155,7 @@ class TaskB:
             scheduler = lr_scheduler.ExponentialLR(optimizer = optimizer, gamma = 0.9)
 
             # Define variables and maximum number of epochs
-            self.epoch = range(1, 11)
+            self.epoch = range(1, 31)
             self._train_loss, self._val_loss, self._val_correct = [], [], []
             best_state, best_epoch, best_val_loss, best_accuracy = {}, 1, float('inf'), 0
 

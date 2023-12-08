@@ -10,6 +10,7 @@ def main():
     print(f"5-fold cross validation accuracy: \n", [format(i, '>0.1f') for i in [x*100 for x in svm.cv_score]], "%")
     print(f"Prediction accuracy: \n{(100*svm.pred_score):>0.1f}%")
     print(f"Performance metrics:\nPrecision: {(svm.precision):>0.1f}\nRecall: {(svm.recall):>0.1f}\nF1score: {(svm.f1score):>0.1f}")
+    
     # Instance for task B
     load = False
     CNN_model = TaskB("./Datasets/pathmnist.npz")

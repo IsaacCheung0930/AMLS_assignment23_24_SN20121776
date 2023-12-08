@@ -2,6 +2,8 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.svm import SVC
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import AdaBoostClassifier
 from sklearn.metrics import accuracy_score, confusion_matrix, ConfusionMatrixDisplay, precision_recall_fscore_support
 from sklearn.model_selection import GridSearchCV, KFold, cross_val_score
 
@@ -75,19 +77,27 @@ class TaskA:
         gamma_range = np.logspace(-7, -5, 5)
         d_range = [2, 3, 4]
         r_range = np.logspace(-3, 3, 7)
-        
+        n_range = [50, 100, 200]
+        lr_range = [0.01, 0.1, 1]
+
         # Rearrange the hyperparameters in dictionary. Kernel defaults to be linear
         if kernel == 'rbf':
             grid_parameters = {'C' : C_range, 'gamma' : gamma_range, 'random_state': [42]}
         elif kernel == 'poly':
             grid_parameters = {'C' : C_range, 'degree' : d_range, 'coef0': r_range, 'random_state': [42]}
+        elif kernel == 'tree':
+            grid_parameters = {'n_estimators': n_range, 'learning_rate': lr_range}
         else:
             grid_parameters = {'C' : C_range, 'random_state': [42]}
         
         # Perform gridsearch for best parameters
-        grid = GridSearchCV(SVC(kernel = kernel), param_grid = grid_parameters, cv = 3, scoring = 'accuracy', n_jobs = -1, verbose=2)
+        if kernel == 'tree':
+            tree = DecisionTreeClassifier(max_depth = 1)
+            grid = GridSearchCV(AdaBoostClassifier(tree), param_grid=grid_parameters, cv = 3, scoring = 'accuracy', n_jobs = -1, verbose=2)
+        else:
+            grid = GridSearchCV(SVC(kernel = kernel), param_grid = grid_parameters, cv = 3, scoring = 'accuracy', n_jobs = -1, verbose=2)
+        
         grid.fit(self._val_images, self._val_labels)
-
         # Record the parameters from gridsearch
         self._grid_parameters = grid_parameters
         self._grid_search_results = pd.DataFrame(grid.cv_results_)
@@ -103,12 +113,15 @@ class TaskA:
             best_parameter  : The best parameter from the gridsearch function
         """
         # Initiate a SVM model with the best parameters
-        cv_model = SVC(kernel = kernel, **best_parameter)
+        if kernel == 'tree':
+            cv_model = AdaBoostClassifier(**best_parameter)
+        else:
+            cv_model = SVC(kernel = kernel, **best_parameter)
 
         # Initiate a 5-fold cross validation and record the accuracy
+        print(self.best_parameter)
         kf = KFold(n_splits = 5, shuffle = True, random_state = 42)
-        self.cv_score = cross_val_score(cv_model, self._train_images, self._train_labels, cv = kf)
-
+        self.cv_score = cross_val_score(cv_model, self._train_images, self._train_labels, cv = kf, n_jobs=-1, verbose=2)
 
     def _prediction(self, kernel, best_parameter):
         """
@@ -119,7 +132,10 @@ class TaskA:
             best_parameter  : The best parameter from the gridsearch function
         """
         # Initiate a SVM model with the best kernel parameter
-        clf = SVC(kernel = kernel, **best_parameter)
+        if kernel == 'tree':
+            clf = AdaBoostClassifier(**best_parameter)
+        else:
+            clf = SVC(kernel = kernel, **best_parameter)
 
         # Fit the test data in the model and predict the labels
         clf.fit(self._train_images, self._train_labels)
@@ -166,6 +182,15 @@ def main():
     """
     Use this function if the script is run from this file.
     """
+    tree = TaskA('tree','./Datasets/pneumoniamnist.npz')
+    tree.execution()
+    tree.evaluation()
+    print(f"Best AdaBoost parameter & accuracy: \n{tree.best_parameter}, {(100*tree.best_score):>0.1f}%")
+    print(f"5-fold cross validation accuracy: \n", [format(i, '>0.1f') for i in [x*100 for x in tree.cv_score]], "%")
+    print(f"Prediction accuracy: \n{(100*tree.pred_score):>0.1f}%")
+    print(f"Performance metrics:\nPrecision: {(tree.precision):>0.1f}\nRecall: {(tree.recall):>0.1f}\nF1score: {(tree.f1score):>0.1f}")
+    
+    '''
     svm = TaskA('rbf','./Datasets/pneumoniamnist.npz')
     svm.execution()
     svm.evaluation()
@@ -173,6 +198,7 @@ def main():
     print(f"5-fold cross validation accuracy: \n", [format(i, '>0.1f') for i in [x*100 for x in svm.cv_score]], "%")
     print(f"Prediction accuracy: \n{(100*svm.pred_score):>0.1f}%")
     print(f"Performance metrics:\nPrecision: {(svm.precision):>0.1f}\nRecall: {(svm.recall):>0.1f}\nF1score: {(svm.f1score):>0.1f}")
+    '''
 
 if __name__ == "__main__":
     main()
