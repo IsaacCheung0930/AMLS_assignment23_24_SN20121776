@@ -1,9 +1,11 @@
 import numpy as np
+import csv
 import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.optim.lr_scheduler as lr_scheduler
 from torch.utils.data import Dataset, DataLoader
+from imblearn.over_sampling import SMOTE
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay, precision_recall_fscore_support
 import matplotlib.pyplot as plt
 
@@ -12,8 +14,8 @@ class CustomImageDataset(Dataset):
     A class to load custom images for a CNN model.
 
     Attributes:
-        path    : The directory of the file
-        subset  : The type of data (train/ test/ validation)
+        images  : The images loaded from the .npz file in tensor format 
+        labels  : The labels loaded from the .npz file in tensor format
     """
     def __init__(self, path, subset = 'train'):
         """
@@ -99,12 +101,20 @@ class CNN(nn.Module):
 
         return x
 
-class TaskB:
+class Cnn:
     """
     A class for the CNN model for task B.
 
     Attributes:
-        dir : Directory of the dataset
+        pred_accuracy   : Prediction accuracy
+        precision       : Precision of the predicted labels (class 0 - 8, micro, macro)
+        recall          : Recall of the predicted labels (class 0 - 8, micro, macro)
+        f1score         : F1 score of the predicted labels (class 0 - 8, micro, macro)
+        epoch           : Total number of epochs performed in model training
+        best_epoch      : Epoch at the best model state (lowest validation loss and highest validation accuracy)
+        train_loss      : Training loss at the best model state (lowest validation loss and highest validation accuracy)
+        val_loss        : Validation loss at the best model state (lowest validation loss and highest validation accuracy)
+        val_accuracy    : Validation accuracy at the best model state (lowest validation loss and highest validation accuracy)
     """
     def __init__(self, dir):
         """
@@ -155,7 +165,7 @@ class TaskB:
             scheduler = lr_scheduler.ExponentialLR(optimizer = optimizer, gamma = 0.9)
 
             # Define variables and maximum number of epochs
-            self.epoch = range(1, 31)
+            self.epoch = range(1, 21)
             self._train_loss, self._val_loss, self._val_correct = [], [], []
             best_state, best_epoch, best_val_loss, best_accuracy = {}, 1, float('inf'), 0
 
@@ -179,11 +189,13 @@ class TaskB:
                     best_val_loss = avg_val_loss
                     best_val_accuracy = avg_val_correct
                     best_epoch = i
+
                     # Generate the metrics for the best model state
-                    self.best_metrics = {"epoch": best_epoch,
-                                         "train_loss": format(avg_train_loss, ".3f"),
-                                         "val_loss": format(best_val_loss, ".3f"),
-                                         "val_acc": format(best_val_accuracy*100, ".1f")}
+                    self.best_epoch = best_epoch
+                    self.train_loss = f"{(avg_train_loss):.1f}"
+                    self.val_loss = f"{(best_val_loss):.1f}"
+                    self.val_accuracy = f"{(best_val_accuracy * 100):.1f}"
+
                     best_state = model.state_dict()
 
             # Load the state of the model with the best valiation performance
@@ -206,9 +218,34 @@ class TaskB:
 
         # If an old model is loaded, no training data is available hence no loss-accuracy plot
         if self._load == False:
-            self._loss_accuracy_plots(self.epoch, self._train_loss, self._val_loss, self._val_correct)
-        self._confusion_matrix_plot(self._true_values, self._pred_values)
-        self._metrics_plots(self._true_values, self._pred_values)
+            self._loss_accuracy_plots()
+        self._confusion_matrix_plot()
+        self._metrics_plots()
+
+    def export(self):
+        """
+        Export the calculated metrics to a .CSV file. 
+        The metrics can be accessed as class attributes.
+        """
+        results = [["Total Epoch", self.epoch],
+                   ["Best Epoch", self.best_epoch],
+                   ["Training loss", self.train_loss],
+                   ["Validation loss", self.val_loss],
+                   ["Validation accuracy (%)", self.val_accuracy],
+                   ["Prediction Accuracy (%)", self.pred_accuracy],
+                   ["Prediction Precision", self.precision],
+                   ["Prediction Recall", self.recall],
+                   ["Prediction F1 Score", self.f1score]]
+        
+        path = "./B/Results/cnn.csv"
+        
+        # Write to different files based on the kernel. 
+        with open(path, "w", newline = "") as file:
+            writer = csv.writer(file)
+            for row in results:
+                writer.writerow(row)
+
+        print("Results exported to: ", path)
 
     def _train(self, dataloader, model, criterion, optimizer):
         """
@@ -336,20 +373,14 @@ class TaskB:
         
         return pred_values, true_values
 
-    def _loss_accuracy_plots(self, epoch, train_loss, val_loss, val_correct):
+    def _loss_accuracy_plots(self):
         """
         Plot the training and validation related plots
-
-        Parameters:
-            epoch       : The maximum epoch 
-            train_loss  : The average training loss of a batch of training data
-            val_loss    : The average validation loss per batch
-            val_correct : The average validation accuracy
         """
         # Plot the training and validation loss against epoch
         plt.figure()
-        plt.plot(epoch, train_loss, label = "Training Loss", marker="*")
-        plt.plot(epoch, val_loss, label = "Validation Loss", marker="*")
+        plt.plot(self.epoch, self._train_loss, label = "Training Loss", marker="*")
+        plt.plot(self.epoch, self._val_loss, label = "Validation Loss", marker="*")
         plt.title("Training and Validation Loss Against Epoch")
         plt.xlabel("Epoch")
         plt.ylabel("Loss")
@@ -359,7 +390,7 @@ class TaskB:
 
         # Plot the validation accuracy against epoch
         plt.figure()
-        plt.plot(epoch, val_correct, label = "Validation Accuracy", marker="*")
+        plt.plot(self.epoch, self._val_correct, label = "Validation Accuracy", marker="*")
         plt.title("Validation Accuracy Against Epoch")
         plt.xlabel("Epoch")
         plt.ylabel("Accuracy")
@@ -367,29 +398,32 @@ class TaskB:
         plt.legend()
         plt.savefig("./B/Plots/Validation Accuracy Against Epoch.PNG")
 
-    def _confusion_matrix_plot(self, true_values, pred_values):
+    def _confusion_matrix_plot(self):
         """
         Plot the confusion matrix using the sklearn library.
-
-        Parameters:
-            true_values : The true labels
-            pred_values : The predicted labels 
         """
         # Plot the confusion matrix
-        conf_matrix = ConfusionMatrixDisplay(confusion_matrix(true_values, pred_values))
+        conf_matrix = ConfusionMatrixDisplay(confusion_matrix(self._true_values, self._pred_values))
         conf_matrix.plot(cmap= "plasma")
-        conf_matrix.figure_.savefig("./B/Plots/Confusion Matrix.PNG")
+        conf_matrix.figure_.savefig("./B/Plots/Confusion Matrix CNN.PNG")
 
-    def _metrics_plots(self, true_values, pred_values):
-        micro_precision, micro_recall, micro_f1score, _ = precision_recall_fscore_support(true_values, pred_values, average='micro')
-        macro_precision, macro_recall, macro_f1score, _ = precision_recall_fscore_support(true_values, pred_values, average='macro')
-        class_precision, class_recall, class_f1score, _ = precision_recall_fscore_support(true_values, pred_values, average=None)
+    def _metrics_plots(self):
+        """
+        Generate the data and plots for micro, macro and class metrics (precision, recall, f1 score).
+        """
+        micro_precision, micro_recall, micro_f1score, _ = precision_recall_fscore_support(self._true_values, self._pred_values, average='micro')
+        macro_precision, macro_recall, macro_f1score, _ = precision_recall_fscore_support(self._true_values, self._pred_values, average='macro')
+        class_precision, class_recall, class_f1score, _ = precision_recall_fscore_support(self._true_values, self._pred_values, average=None)
         
         precision = np.append(class_precision, np.append(micro_precision, macro_precision))
         recall = np.append(class_recall, np.append(micro_recall, macro_recall))
         f1score = np.append(class_f1score, np.append(micro_f1score, macro_f1score))
 
-        classes = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "Micro", "Macro"]
+        self.precision = [format(i, '>0.1f') for i in precision]
+        self.recall = [format(i, '>0.1f') for i in recall]
+        self.f1score = [format(i, '>0.1f') for i in f1score]
+
+        classes = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "Micro", "Macro"]
         ticks = np.arange(len(classes))
         plt.figure()
         plt.bar(ticks, precision, 0.2, label = "Precision")
@@ -407,17 +441,16 @@ def main():
     """
     Use this function if the script is run from this file.
     """
-
     load = False
-    CNN_model = TaskB("./Datasets/pathmnist.npz")
+    CNN_model = Cnn("./Datasets/pathmnist.npz")
     CNN_model.execution(load=load, overwrite=False)
     CNN_model.evaluation()
+
+    # Most of the training metrics are unavailable if a pre-trained model is used.
     if load == False:
-        print(f"Total number of epoch: \n{CNN_model.epoch[-1]}")
-        print(f"Best epoch (lowest validation loss & highest accuracy): \n{CNN_model.best_metrics['epoch']}")
-        print(f"Training loss and validation loss: \n{CNN_model.best_metrics['train_loss']}, {CNN_model.best_metrics['val_loss']}")
-        print(f"Validation accuracy: \n{CNN_model.best_metrics['val_acc']}%")
-    print(f"Prediction accuracy: \n{CNN_model.pred_accuracy}%")
+        CNN_model.export()
+    else:
+        print(f"Prediction accuracy: \n{CNN_model.pred_accuracy}%")
     
 if __name__ == "__main__":
     main()

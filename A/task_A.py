@@ -8,7 +8,7 @@ from sklearn.ensemble import AdaBoostClassifier
 from sklearn.metrics import accuracy_score, confusion_matrix, ConfusionMatrixDisplay, precision_recall_fscore_support
 from sklearn.model_selection import GridSearchCV, KFold, cross_val_score
 
-class SVM:
+class Svm:
     """
     A class for the SVM model for task A. Possible Kernels are linear, poly and rbf. 
 
@@ -106,7 +106,6 @@ class SVM:
 
         print("Results exported to: ", path)
 
-
     def _hyperparameters(self):
         """
         Search for the best hyperparameter using the validation set. 
@@ -173,11 +172,11 @@ class SVM:
 
         # Save the confusion matrix and .PNG
         if self._kernel == "rbf":
-            conf_matrix.figure_.savefig("./A/Plots/confusion_matrix_rbf.PNG")
+            conf_matrix.figure_.savefig("./A/Plots/Confusion Matrix Rbf.PNG")
         elif self._kernel == "poly":
-            conf_matrix.figure_.savefig("./A/Plots/confusion_matrix_poly.PNG")
+            conf_matrix.figure_.savefig("./A/Plots/Confusion Matrix Poly.PNG")
         else:
-            conf_matrix.figure_.savefig("./A/Plots/confusion_matrix_linear.PNG")
+            conf_matrix.figure_.savefig("./A/Plots/Confusion Matrix Linear.PNG")
 
 class Tree:
     """
@@ -331,7 +330,7 @@ class Tree:
         # Plot the confusion matrix
         conf_matrix = ConfusionMatrixDisplay(confusion_matrix(self._test_labels, self._pred_labels))
         conf_matrix.plot(cmap= "plasma")
-        conf_matrix.figure_.savefig("./A/Plots/confusion_matrix_tree.PNG")
+        conf_matrix.figure_.savefig("./A/Plots/Confusion Matrix Tree.PNG")
 
 def main():
     """
@@ -342,7 +341,7 @@ def main():
     tree.evaluation()
     tree.export()
     """
-    svm = SVM('linear', './Datasets/pneumoniamnist.npz')
+    svm = Svm('linear', './Datasets/pneumoniamnist.npz')
     svm.execution()
     svm.evaluation()
     svm.export()
