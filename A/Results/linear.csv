@@ -1,0 +1,7 @@
+Best Hyperparameters,"{'C': 0.001, 'random_state': 42}"
+Validation Accuracy w/ Best Hyperparameters (%),87.1
+5-fold Cross Validation Accuracy (%),"['87.1', '87.1', '86.3', '86.2', '84.3']"
+Prediction Accuracy (%),85.4
+Prediction Precision,0.9
+Prediction Recall,0.9
+Prediction F1 Score,0.9
