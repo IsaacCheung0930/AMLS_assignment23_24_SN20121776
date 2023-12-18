@@ -83,7 +83,8 @@ class Svm:
         Export the calculated metrics to a .CSV file. 
         The metrics can be accessed as class attributes.
         """
-        results = [["Best Hyperparameters", self.best_parameter],
+        results = [["Metrics", "Results"],
+                   ["Best Hyperparameters", self.best_parameter],
                    ["Validation Accuracy w/ Best Hyperparameters (%)", self.best_score],
                    ["5-fold Cross Validation Accuracy (%)", self.cv_score],
                    ["Prediction Accuracy (%)", self.pred_score],
@@ -249,7 +250,8 @@ class Tree:
         Export the calculated metrics to a .CSV file. 
         The metrics can be accessed as class attributes.
         """
-        results = [["Best Hyperparameters", self.best_parameter],
+        results = [["Metrics", "Results"],
+                   ["Best Hyperparameters", self.best_parameter],
                    ["Validation Accuracy w/ Best Hyperparameters (%)", self.best_score],
                    ["5-fold Cross Validation Accuracy (%)", self.cv_score],
                    ["Prediction Accuracy (%)", self.pred_score],

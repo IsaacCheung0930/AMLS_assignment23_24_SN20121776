@@ -227,7 +227,8 @@ class Cnn:
         Export the calculated metrics to a .CSV file. 
         The metrics can be accessed as class attributes.
         """
-        results = [["Total Epoch", self.epoch],
+        results = [["Metrics", "Results"],
+                   ["Total Epoch", self.epoch],
                    ["Best Epoch", self.best_epoch],
                    ["Training loss", self.train_loss],
                    ["Validation loss", self.val_loss],
