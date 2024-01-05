@@ -1,7 +1,8 @@
+Metrics,Results
 Best Hyperparameters,"{'learning_rate': 1, 'n_estimators': 200}"
 Validation Accuracy w/ Best Hyperparameters (%),92.3
 5-fold Cross Validation Accuracy (%),"['95.6', '95.4', '94.5', '95.3', '95.3']"
 Prediction Accuracy (%),86.7
-Prediction Precision,0.8
-Prediction Recall,1.0
-Prediction F1 Score,0.9
+Prediction Precision (%),83.7
+Prediction Recall (%),97.7
+Prediction F1 Score (%),90.2

@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.optim.lr_scheduler as lr_scheduler
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset, DataLoader, WeightedRandomSampler
 from imblearn.over_sampling import SMOTE
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay, precision_recall_fscore_support
 import matplotlib.pyplot as plt
@@ -41,6 +41,11 @@ class CustomImageDataset(Dataset):
         else:
             raise ValueError("Use 'train', 'test' or 'val' to specify subsets")
         
+        '''
+        labels, counts = np.unique(self.labels, return_counts=True)
+        for label, count in zip(labels, counts):
+            print(f"Class {label}: {count}")
+        '''
     def __len__(self):
         """
         Hidden method for the Pytorch DataLoader function.
@@ -155,6 +160,15 @@ class Cnn:
             print("CNN model loaded from './B/CNN_model.pth'")
 
         else:
+            '''
+            train_samples = [9366, 9509, 10360, 10401, 8006, 12182, 7886, 9401, 12885]
+            val_samples = [1041, 1057, 1152, 1156, 890, 1354, 877, 1045, 1432]
+            train_weights = [1/ (sample/ sum(train_samples)) for sample in train_samples]
+            val_weights = [1/ (sample/ sum(val_samples)) for sample in val_samples]
+
+            train_sampler = WeightedRandomSampler(weights = train_weights, num_samples = sum(train_samples), replacement=True)
+            val_sampler = WeightedRandomSampler(weights = val_weights, num_samples = sum(val_samples), replacement=True)
+            '''
             # Separate the train and validation images to batches using the DataLoader funcion
             train_dataloader = DataLoader(self._train_images, batch_size = 32, shuffle = True)
             val_dataloader = DataLoader(self._val_images, batch_size = 32, shuffle = True)
@@ -420,18 +434,19 @@ class Cnn:
         recall = np.append(class_recall, np.append(micro_recall, macro_recall))
         f1score = np.append(class_f1score, np.append(micro_f1score, macro_f1score))
 
-        self.precision = [format(i, '>0.1f') for i in precision]
-        self.recall = [format(i, '>0.1f') for i in recall]
-        self.f1score = [format(i, '>0.1f') for i in f1score]
+        self.precision = [float(format(100 * i, '>0.1f')) for i in precision]
+        self.recall = [float(format(100 * i, '>0.1f')) for i in recall]
+        self.f1score = [float(format(100 * i, '>0.1f')) for i in f1score]
 
         classes = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "Micro", "Macro"]
         ticks = np.arange(len(classes))
         plt.figure()
-        plt.bar(ticks, precision, 0.2, label = "Precision")
-        plt.bar(ticks + 0.2, recall, 0.2, label = "Recall")
-        plt.bar(ticks + 0.4, f1score, 0.2, label = "F1")
+        plt.bar(ticks, self.precision, 0.2, label = "Precision")
+        plt.bar(ticks + 0.2, self.recall, 0.2, label = "Recall")
+        plt.bar(ticks + 0.4, self.f1score, 0.2, label = "F1")
         plt.xlabel("Classes")
         plt.ylabel("Score")
+        plt.ylim(0 ,120)
         plt.grid()
         plt.title("Performace Metrics for 9 Classes")
         plt.xticks(ticks + 0.2, classes)

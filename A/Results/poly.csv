@@ -1,7 +1,8 @@
-Best Hyperparameters,"{'C': 0.001, 'coef0': 10.0, 'degree': 4, 'random_state': 42}"
-Validation Accuracy w/ Best Hyperparameters (%),90.7
-5-fold Cross Validation Accuracy (%),"['93.5', '94.6', '93.3', '94.4', '93.2']"
+Metrics,Results
+Best Hyperparameters,"{'C': 1e-06, 'coef0': 10.0, 'degree': 6, 'random_state': 42}"
+Validation Accuracy w/ Best Hyperparameters (%),91.3
+5-fold Cross Validation Accuracy (%),"['94.1', '94.8', '93.5', '95.2', '93.5']"
 Prediction Accuracy (%),88.3
-Prediction Precision,0.9
-Prediction Recall,1.0
-Prediction F1 Score,0.9
+Prediction Precision (%),86.1
+Prediction Recall (%),96.9
+Prediction F1 Score (%),91.2

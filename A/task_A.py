@@ -74,9 +74,9 @@ class Svm:
         self._confusion_matrix_plot()
 
         self.pred_score = f"{(100 * pred_score):.1f}"
-        self.precision = f"{(precision):.1f}"
-        self.recall = f"{(recall):.1f}"
-        self.f1score = f"{(f1score):.1f}"
+        self.precision = f"{(100 * precision):.1f}"
+        self.recall = f"{(100 * recall):.1f}"
+        self.f1score = f"{(100 * f1score):.1f}"
         
     def export(self):
         """
@@ -88,9 +88,9 @@ class Svm:
                    ["Validation Accuracy w/ Best Hyperparameters (%)", self.best_score],
                    ["5-fold Cross Validation Accuracy (%)", self.cv_score],
                    ["Prediction Accuracy (%)", self.pred_score],
-                   ["Prediction Precision", self.precision],
-                   ["Prediction Recall", self.recall],
-                   ["Prediction F1 Score", self.f1score]]
+                   ["Prediction Precision (%)", self.precision],
+                   ["Prediction Recall (%)", self.recall],
+                   ["Prediction F1 Score (%)", self.f1score]]
         
         if self._kernel == "rbf":
             path = "./A/Results/rbf.csv"
@@ -113,9 +113,9 @@ class Svm:
         GridSearchCV function from sklearn is used.
         """
         # Define the range for hyperparameters
-        C_range = np.logspace(-3, 3, 7)
+        C_range = np.logspace(-7, 1, 9)
         gamma_range = np.logspace(-7, -5, 5)
-        d_range = [2, 3, 4]
+        d_range = [5, 6, 7]
         r_range = np.logspace(-3, 3, 7)
 
         # Rearrange the hyperparameters in dictionary. Kernel defaults to be linear
@@ -241,9 +241,9 @@ class Tree:
         self._confusion_matrix_plot()
 
         self.pred_score = f"{(100 * pred_score):.1f}"
-        self.precision = f"{(precision):.1f}"
-        self.recall = f"{(recall):.1f}"
-        self.f1score = f"{(f1score):.1f}"
+        self.precision = f"{(100 * precision):.1f}"
+        self.recall = f"{(100 * recall):.1f}"
+        self.f1score = f"{(100 * f1score):.1f}"
         
     def export(self):
         """
@@ -255,9 +255,9 @@ class Tree:
                    ["Validation Accuracy w/ Best Hyperparameters (%)", self.best_score],
                    ["5-fold Cross Validation Accuracy (%)", self.cv_score],
                    ["Prediction Accuracy (%)", self.pred_score],
-                   ["Prediction Precision", self.precision],
-                   ["Prediction Recall", self.recall],
-                   ["Prediction F1 Score", self.f1score]]
+                   ["Prediction Precision (%)", self.precision],
+                   ["Prediction Recall (%)", self.recall],
+                   ["Prediction F1 Score (%)", self.f1score]]
         
         path = "./A/Results/tree.csv"
         
@@ -276,7 +276,7 @@ class Tree:
         """
         # Define the range for hyperparameters
         n_range = [50, 100, 200]
-        lr_range = [0.01, 0.1, 1]
+        lr_range = [0.1, 1, 10]
 
         # Rearrange the hyperparameters in dictionary.
         grid_parameters = {'n_estimators': n_range, 'learning_rate': lr_range}
@@ -338,16 +338,18 @@ def main():
     """
     Use this function if the script is run from this file.
     """
+    
     tree = Tree('./Datasets/pneumoniamnist.npz')
     tree.execution()
     tree.evaluation()
     tree.export()
-    """
-    svm = Svm('linear', './Datasets/pneumoniamnist.npz')
+    
+    '''
+    svm = Svm('rbf', './Datasets/pneumoniamnist.npz')
     svm.execution()
     svm.evaluation()
     svm.export()
-    """
+    '''
 if __name__ == "__main__":
     main()
     
