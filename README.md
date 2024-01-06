@@ -1,6 +1,6 @@
 # AMLS_assignment23_24
 ## Description
-This is an assignment for ELEC0134 Advanced Machine Learning System. 
+This is an assignment for ELEC0134 Applied Machine Learning System. Task A uses the PneumoniaMNIST.npz file, while task B uses the PathMNIST.npz file. 
 
 ## Project Organisation
 AMLS_23-24_SN20121776
@@ -27,7 +27,7 @@ AMLS_23-24_SN20121776
 8. All packages installed in the virtual environement is listed in requirement.txt.
 
 ## Running the Project
-This project (both tasks) can be run using the main.py, or individually using the respective .py files. Note that the SVM model in Task A allows for different kernels. The default kernel is 'linear', but can be changed to 'rbf' or 'poly' if necessary. The performance metrics of the models can be viewed using the .CSV files in the Results folder; while the generated plots can be found in the Plots folder.
+This project (both tasks) can be run using the main.py, or individually using the respective .py files. Note that the SVM model in Task A allows for different kernels. The default kernel is 'linear', but can be changed to 'rbf' or 'poly' if necessary. The performance metrics of the models can be viewed using the .CSV files in the Results folder; while the generated plots can be found in the Plots folder. Note that due to random number assignments, slightly different model results may be generated. 
 
 ## Required Packages
 - numpy           1.26.2

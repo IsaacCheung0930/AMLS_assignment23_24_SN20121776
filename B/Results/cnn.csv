@@ -1,10 +1,10 @@
 Metrics,Results
 Total Epoch,"range(1, 21)"
-Best Epoch,15
-Training loss,0.2
+Best Epoch,11
+Training loss,0.3
 Validation loss,0.4
-Validation accuracy (%),86.0
-Prediction Accuracy (%),76
-Prediction Precision,"[93.0, 77.2, 40.4, 91.7, 88.6, 71.7, 78.3, 34.4, 80.1, 76.7, 72.8]"
-Prediction Recall,"[96.0, 100.0, 75.5, 78.9, 58.6, 47.1, 71.0, 39.0, 84.6, 76.7, 72.3]"
-Prediction F1 Score,"[94.5, 87.1, 52.7, 84.8, 70.5, 56.9, 74.5, 36.5, 82.3, 76.7, 71.1]"
+Validation accuracy (%),85.0
+Prediction Accuracy (%),77
+Prediction Precision,"[94.1, 81.7, 39.1, 87.9, 82.2, 72.3, 80.3, 38.2, 83.3, 77.6, 73.2]"
+Prediction Recall,"[95.9, 100.0, 80.5, 81.4, 64.8, 46.8, 68.2, 38.0, 84.3, 77.6, 73.3]"
+Prediction F1 Score,"[95.0, 89.9, 52.7, 84.5, 72.5, 56.8, 73.7, 38.1, 83.8, 77.6, 71.9]"
